@@ -1,1 +1,0 @@
-# lichenMapsFrom2018Simulations
