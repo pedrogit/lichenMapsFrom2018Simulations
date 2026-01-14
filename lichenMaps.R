@@ -140,7 +140,8 @@ if (currentYear == "2011") {
     method = "bilinear",
     writeTo = plotAndPixelGroupAreaDemPath,
     userTags = "MRDEMMap",
-    cachePath = cacheFolder
+    cachePath = cacheFolder,
+    overwrite = TRUE
   )
   ################################################################################
   # Generate the TWI map
@@ -225,7 +226,9 @@ if (currentYear == "2011") {
     cropTo = plotAndPixelGroupArea,
     writeTo = file.path(getPaths()$cache, "NA_CEC_Eco_Level3_postProcessed.shp"),
     fun = terra::vect,
-    userTags = c(userTags, "NA_CEC_Eco_Level3_postProcessed.shp")
+    userTags = "NA_CEC_Eco_Level3_postProcessed.shp",
+    cachePath = cacheFolder,
+    overwrite = TRUE
   )
   ecoProvVect <- ecoProvVect[, c("NA_L3NAME")]
   ecoProvVect$NA_L3NAME <- as.factor(ecoProvVect$NA_L3NAME)
