@@ -197,11 +197,13 @@ if (currentYear == "2011") {
   message("Download and patch CANSIS soil maps with SoilGrids data...")
   CANSISMapToProcess <- c("Clay", "Sand", "Silt", "BD") # BD is bulk_density
   equivSoilGridsMaps <- c("clay", "sand", "silt", "bdod") # bdod is bulk_density
-  soilMaps <- list()
-  sapply(CANSISMapToProcess, function(mapName){
+  # soilMaps <- list()
+  for (mapName in CANSISMapToProcess) {
     message("##############################################################################")
-    varMapName <- paste0("WB_VBD_", mapName, "Map") # e.g. WB_VBD_clayMap
-    soilMaps[[varMapName]] <- getAndPatchCANSISSoilMap(
+    message("processing ", mapName, "...")
+    # varMapName <- paste0("WB_VBD_", mapName, "Map") # e.g. WB_VBD_clayMap
+    # browser()
+    assign(tolower(mapName), getAndPatchCANSISSoilMap(
       mapName = mapName,
       plotAndPixelGroupArea = plotAndPixelGroupArea,
       plotAndPixelGroupAreaRast = plotAndPixelGroupAreaRast,
@@ -209,8 +211,8 @@ if (currentYear == "2011") {
       CANSISMapToProcess = CANSISMapToProcess,
       destinationPath = cacheFolder,
       cachePath = cacheFolder
-    )
-  })
+    ))
+  }
 
   ##############################################################################
   # Download the EcoProvince map
