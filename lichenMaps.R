@@ -100,7 +100,7 @@ if (currentYear == "2011") {
   
   # Read and clean plot data from the module repository
   plotdataFilePath <- "https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/data/plotData.csv"
-  drainagePlotData <- getAndcleanPlotData(plotdataFilePath, baseCRS)
+  drainagePlotPoints <- getAndcleanPlotData(plotdataFilePath, baseCRS)
   
   ################################################################################
   # Compute the joined area covered by the plot data AND the pixelGroupMap raster
@@ -110,7 +110,7 @@ if (currentYear == "2011") {
   ################################################################################
   
   # Make a buffer around the plot data
-  plotPoints100KmBuffers <- aggregate(buffer(drainagePlotData, width = 100000))  # 1000 m buffer (if CRS is in meters)
+  plotPoints100KmBuffers <- aggregate(buffer(drainagePlotPoints, width = 100000))  # 1000 m buffer (if CRS is in meters)
   
   # Merge it with the base extent polygon
   plotAndPixelGroupArea <- aggregate(rbind(plotPoints100KmBuffers, baseExtentPoly))
@@ -146,8 +146,8 @@ if (currentYear == "2011") {
   # Generate the TWI map
   ################################################################################
   message("##############################################################################")   
-  message("Generating TWIMap from MRDEMMap...")   
-  TWIMap <- generateTWIMap(
+  message("Generating twi from MRDEMMap...")   
+  twi <- generateTWIMap(
     dem = MRDEMMap,
     dem_path = plotAndPixelGroupAreaDemPath,
     dem_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_filled.tif"),
@@ -161,8 +161,8 @@ if (currentYear == "2011") {
   # Generate the Downslope Distance map
   ################################################################################
   message("##############################################################################")   
-  message("Generating DownslopeDistMap from MRDEMMap...")   
-  downslopeDistMap <- generateDownslopeDistMap(
+  message("Generating downslope_dist from MRDEMMap...")   
+  downslope_dist <- generateDownslopeDistMap(
     dem = MRDEMMap,
     dem_path = plotAndPixelGroupAreaDemPath,
     dem_breach_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_breachFilledDep.tif"),
@@ -176,9 +176,9 @@ if (currentYear == "2011") {
   # Generate an aspect map from the MRDEM if it is not supplied
   ##############################################################################
   message("##############################################################################")   
-  message("Generating AspectMap from MRDEMMap...")
+  message("Generating aspect from MRDEMMap...")
   aspectPath <- file.path(cacheFolder, "plotAndPixelGroupAreaDem_aspect.tif")
-  aspectMap <- Cache(
+  aspect <- Cache(
     cacheableWhiteboxFct,
     cacheable_input = MRDEMMap,
     fun_name = "wbt_aspect",
@@ -187,7 +187,7 @@ if (currentYear == "2011") {
     userTags = "plotAndPixelGroupAreaDem_aspect.tif",
     cachePath = cacheFolder
   )
-  names(aspectMap) <- "aspect"
+  names(aspect) <- "aspect"
 
   ##############################################################################
   # Download and patch CANSIS soil maps with SoilGrids data
@@ -216,7 +216,7 @@ if (currentYear == "2011") {
   ##############################################################################
   message("##############################################################################")   
   message("Download the EcoProvince map...")
-  ecoProv <- Cache(
+  ecoProvVect <- Cache(
     prepInputs,
     url = extractURL("EcoProvincesMap", sim),
     targetFile = "NA_CEC_Eco_Level3.shp",
@@ -227,8 +227,8 @@ if (currentYear == "2011") {
     fun = terra::vect,
     userTags = c(userTags, "NA_CEC_Eco_Level3_postProcessed.shp")
   )
-  ecoProv <- ecoProv[, c("NA_L3NAME")]
-  ecoProv$NA_L3NAME <- as.factor(ecoProv$NA_L3NAME)
-  names(ecoProv)[names(ecoProv) == "NA_L3NAME"] <- "ecoprov"
-  ecoProvMap <- rasterize(ecoProv, plotAndPixelGroupAreaRast, field = "ecoprov")
+  ecoProvVect <- ecoProvVect[, c("NA_L3NAME")]
+  ecoProvVect$NA_L3NAME <- as.factor(ecoProvVect$NA_L3NAME)
+  names(ecoProvVect)[names(ecoProvVect) == "NA_L3NAME"] <- "ecoprov"
+  ecoprov <- rasterize(ecoProvVect, plotAndPixelGroupAreaRast, field = "ecoprov")
 }
