@@ -6,6 +6,7 @@ library(data.table)
 library(terra)
 library(reproducible)
 library(whitebox)
+library(caret)
 
 source("https://raw.githubusercontent.com/pedrogit/rUtils/refs/heads/main/rutils.R")
 # source(file.path(scriptDir, "../base_withSimInit/modules/rUtils/rutils.R")
@@ -236,4 +237,50 @@ if (currentYear == "2011") {
   ecoProvVect$NA_L3NAME <- as.factor(ecoProvVect$NA_L3NAME)
   names(ecoProvVect)[names(ecoProvVect) == "NA_L3NAME"] <- "ecoprov"
   ecoprov <- rasterize(ecoProvVect, plotAndPixelGroupAreaRast, field = "ecoprov")
-}
+  
+  ##############################################################################
+  # Fit a drainage model
+  ##############################################################################
+  message("##############################################################################")   
+  # List the covariates from which to extract values
+  # element's names are the names of the column to create in the plotPoints dataframe (e.g clay)
+  # element values are maps to extract values from (e.g. twi)
+  covariateMapList = list(
+    twi = twi,
+    downslope_dist = downslope_dist,
+    aspect = aspect,
+    clay = clay,
+    sand = sand,
+    silt = silt,
+    bd = bd,
+    ecoprov = ecoprov
+  )
+  
+  # Fit the model
+  drainageModel <- fit_WB_VegBasedDrainageModel(
+    plotPoints = drainagePlotPoints,
+    covariateMapList = covariateMapList,
+    pixelDist = 2
+  )
+  
+  # Crop covariate maps back to groupPixelMap now that the model is fitted and 
+  # we don't need to extract covariate values at plot points anymore.
+  # From now on, the module will, at each iteration step, use the model to predict 
+  # drainage from the list of covariate maps.
+  message("##############################################################################")   
+  message("Now that the model is fitted using maps covering the plot data, we can crop")
+  message("the covariates back to the study area (baseRast)...")
+  for (mapName in names(covariateMapList)) {
+    message("Cropping ", mapName, " back to study area...")   
+    assign(
+      mapName,
+      Cache(
+        postProcessTo,
+        covariateMapList[[mapName]],
+        cropTo = baseRast,
+        userTags = mapName,
+        cachePath = cacheFolder,
+        overwrite = TRUE
+      )
+    )
+  }
