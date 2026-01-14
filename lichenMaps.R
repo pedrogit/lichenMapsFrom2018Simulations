@@ -284,3 +284,67 @@ if (currentYear == "2011") {
       )
     )
   }
+  
+  ##############################################################################
+  # Generate the non forested area map
+  ##############################################################################
+  # We do not have the equivalent of rasterToMatch which is a raster
+  # representation of the study area without NA holes. We therefore have to 
+  # produce it from pixelGroupMap.
+  
+  message("##############################################################################")   
+  message("Generate the non forested area map...")   
+  message("1 - Vectorize pixelGroupMap...")   
+  baseRastPoly <- Cache(
+    as.polygons,
+    x = baseRast,
+    userTags = "baseRastPoly",
+    cachePath = cacheFolder
+  )
+
+  message("2 - Make buffer around each polygon...")   
+  bufSize <- res(baseRast)[1] * 30
+  baseRastPolyBuf <- Cache(
+    buffer,
+    x = baseRastPoly, 
+    width = bufSize,
+    userTags = "baseRastPolyBuf",
+    cachePath = cacheFolder
+  )
+
+  message("3 - Dissolve them all together...")   
+  baseRastPolyBufDissolved <- Cache(
+    aggregate,
+    x = baseRastPolyBuf,
+    fun = "first",
+    userTags = "baseRastPolyBufDissolved",
+    cachePath = cacheFolder
+  )
+
+  message("4 - Remove a 10 pixels wide buffer...")   
+  baseRastPolyBufDissolvedWithHoles <- Cache(
+    buffer,
+    baseRastPolyBufDissolvedWithHoles, 
+    width = -bufSize,
+    userTags = "baseRastPolyBufDissolvedWithHoles",
+    cachePath = cacheFolder
+  )
+
+  message("5 - Remove the holes...")   
+  baseRastPolyBufDissolvedWithoutHoles <- Cache(
+    fillHoles,
+    x = baseRastPolyBufDissolvedWithHoles,
+    userTags = "baseRastPolyBufDissolvedWithoutHoles",
+    cachePath = cacheFolder
+  )
+
+  message("6 - Rasterize to an equivalent raster...")   
+  studyAreaRast <- Cache(
+    terra::rasterize,
+    x = baseRastPolyBufDissolvedWithoutHoles,
+    y = baseRast,
+    userTags = "studyAreaRast",
+    cachePath = cacheFolder
+  )
+}
+
