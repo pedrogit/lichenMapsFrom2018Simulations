@@ -221,12 +221,12 @@ if (currentYear == "2011") {
   message("Download the EcoProvince map...")
   ecoProvVect <- Cache(
     prepInputs,
-    url = extractURL("EcoProvincesMap", sim),
+    url ="https://dmap-prod-oms-edc.s3.us-east-1.amazonaws.com/ORD/Ecoregions/cec_na/NA_CEC_Eco_Level3.zip",
     targetFile = "NA_CEC_Eco_Level3.shp",
     destinationPath = getPaths()$cache,
     projectTo = plotAndPixelGroupAreaRast,
     cropTo = plotAndPixelGroupArea,
-    writeTo = file.path(getPaths()$cache, "NA_CEC_Eco_Level3_postProcessed.shp"),
+    writeTo = file.path(cacheFolder, "NA_CEC_Eco_Level3_postProcessed.shp"),
     fun = terra::vect,
     userTags = "NA_CEC_Eco_Level3_postProcessed.shp",
     cachePath = cacheFolder,
