@@ -235,7 +235,7 @@ if (currentYear == "2011") {
     prepInputs,
     url ="https://dmap-prod-oms-edc.s3.us-east-1.amazonaws.com/ORD/Ecoregions/cec_na/NA_CEC_Eco_Level3.zip",
     targetFile = "NA_CEC_Eco_Level3.shp",
-    destinationPath = getPaths()$cache,
+    destinationPath = cacheFolder,
     projectTo = plotAndPixelGroupAreaRast,
     cropTo = plotAndPixelGroupArea,
     writeTo = file.path(cacheFolder, "NA_CEC_Eco_Level3_postProcessed.shp"),
