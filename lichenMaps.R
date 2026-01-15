@@ -149,14 +149,18 @@ if (currentYear == "2011") {
   ################################################################################
   message("##############################################################################")   
   message("Generating twi from MRDEMMap...")   
-  twi <- generateTWIMap(
-    dem = MRDEMMap,
-    dem_path = plotAndPixelGroupAreaDemPath,
-    dem_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_filled.tif"),
-    slope_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_slope.tif"),
-    flow_acc_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_flowAccum.tif"),
-    final_twi_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_TWI.tif"),
-    cachePath = cacheFolder
+  twi <- Cache(
+    generateTWIMap(
+      dem = MRDEMMap,
+      dem_path = plotAndPixelGroupAreaDemPath,
+      dem_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_filled.tif"),
+      slope_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_slope.tif"),
+      flow_acc_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_flowAccum.tif"),
+      final_twi_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_TWI.tif"),
+      cachePath = cacheFolder
+    ),
+    cachePath = cacheFolder,
+    userTags = "twi"
   )
   
   ################################################################################
@@ -164,14 +168,18 @@ if (currentYear == "2011") {
   ################################################################################
   message("##############################################################################")   
   message("Generating downslope_dist from MRDEMMap...")   
-  downslope_dist <- generateDownslopeDistMap(
-    dem = MRDEMMap,
-    dem_path = plotAndPixelGroupAreaDemPath,
-    dem_breach_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_breachFilledDep.tif"),
-    bf_flow_acc_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_breachFilledFlowAccum.tif"),
-    streams_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_streams.tif"),
-    downslope_dist_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_downslopeDist.tif"),
-    cachePath = cacheFolder
+  downslope_dist <- Cache(
+    generateDownslopeDistMap(
+      dem = MRDEMMap,
+      dem_path = plotAndPixelGroupAreaDemPath,
+      dem_breach_filled_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_breachFilledDep.tif"),
+      bf_flow_acc_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_breachFilledFlowAccum.tif"),
+      streams_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_streams.tif"),
+      downslope_dist_path = file.path(cacheFolder, "plotAndPixelGroupAreaDem_downslopeDist.tif"),
+      cachePath = cacheFolder
+    ),
+    cachePath = cacheFolder,
+    userTags = "downslope_dist"
   )
   
   ##############################################################################
@@ -198,19 +206,22 @@ if (currentYear == "2011") {
   message("Download and patch CANSIS soil maps with SoilGrids data...")
   CANSISMapToProcess <- c("Clay", "Sand", "Silt", "BD") # BD is bulk_density
   equivSoilGridsMaps <- c("clay", "sand", "silt", "bdod") # bdod is bulk_density
-  # soilMaps <- list()
+
   for (mapName in CANSISMapToProcess) {
     message("##############################################################################")
-    message("processing ", mapName, "...")
-    # varMapName <- paste0("WB_VBD_", mapName, "Map") # e.g. WB_VBD_clayMap
-    # browser()
-    assign(tolower(mapName), getAndPatchCANSISSoilMap(
-      mapName = mapName,
-      plotAndPixelGroupArea = plotAndPixelGroupArea,
-      plotAndPixelGroupAreaRast = plotAndPixelGroupAreaRast,
-      equivSoilGridsMaps = equivSoilGridsMaps,
-      CANSISMapToProcess = CANSISMapToProcess,
-      destinationPath = cacheFolder,
+    message("Processing ", mapName, "...")
+    assign(tolower(mapName), Cache(
+        getAndPatchCANSISSoilMap(
+        mapName = mapName,
+        plotAndPixelGroupArea = plotAndPixelGroupArea,
+        plotAndPixelGroupAreaRast = plotAndPixelGroupAreaRast,
+        equivSoilGridsMaps = equivSoilGridsMaps,
+        CANSISMapToProcess = CANSISMapToProcess,
+        destinationPath = cacheFolder,
+        userTags = tolower(mapName),
+        cachePath = cacheFolder
+      ),
+      userTags = tolower(mapName),
       cachePath = cacheFolder
     ))
   }
