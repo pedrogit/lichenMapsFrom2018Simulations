@@ -126,50 +126,55 @@ concaveHullLength_0_01 <- hull(baseRastPolyNoHoles, type="concave_length", param
 # writeVector(concaveHullLength_0_01, file.path(basePath, "concaveHullLength_0_01.shp"), overwrite=TRUE)
 
 
-}
+
 ################################################################################
 baseRastPolySf <- sf::st_as_sf(baseRastPoly)
 display_ring_and_holes(baseRastPolySf)
+}
 
 baseRastPolyNoHolesSf <- sf::st_as_sf(baseRastPolyNoHoles)
 display_ring_and_holes(baseRastPolyNoHolesSf)
 
+if (FALSE) {
 # SF ConcaveHull - Default params = convexHull
-concaveHullSf_0_5 <- sf::st_concave_hull(baseRastPolyNoHolesSf, 0.5, allow_holes=FALSE)
+concaveHullSf_0_5 <- sf::st_concave_hull(baseRastPolyNoHolesSf, ratio=0.5, allow_holes=FALSE)
 # plot(concaveHullSf_0_5)
 st_write(concaveHullSf_0_5, file.path(basePath, "concaveHullSf_0_5.shp"), delete_layer=TRUE)
 
 # ConcaveHull - params = 0.2
-concaveHullSf_0_2 <- sf::st_concave_hull(baseRastPolyNoHolesSf, 0.2, allow_holes=FALSE)
+concaveHullSf_0_2 <- sf::st_concave_hull(baseRastPolyNoHolesSf, ratio=0.2, allow_holes=FALSE)
 # plot(concaveHullSf_0_2)
 st_write(concaveHullSf_0_2, file.path(basePath, "concaveHullSf_0_2.shp"), delete_layer=TRUE)
 
 # ConcaveHull - params = 0.05
-concaveHullSf_0_05 <- sf::st_concave_hull(baseRastPolyNoHolesSf, 0.05, allow_holes=FALSE)
+concaveHullSf_0_05 <- sf::st_concave_hull(baseRastPolyNoHolesSf, ratio=0.05, allow_holes=FALSE)
 # plot(concaveHullSf_0_05)
 st_write(concaveHullSf_0_05, file.path(basePath, "concaveHullSf_0_05.shp"), delete_layer=TRUE)
 
 # ConcaveHull - params = 0.02
-concaveHullSf_0_02 <- sf::st_concave_hull(baseRastPolyNoHolesSf, 0.02, allow_holes=FALSE)
+concaveHullSf_0_02 <- sf::st_concave_hull(baseRastPolyNoHolesSf, ratio=0.02, allow_holes=FALSE)
 # plot(concaveHullSf_0_02)
 st_write(concaveHullSf_0_02, file.path(basePath, "concaveHullSf_0_02.shp"), delete_layer=TRUE)
 
 system.time({
-  # ConcaveHull - params = 0.01 - Best
-  concaveHullSf_0_01 <- sf::st_concave_hull(baseRastPolySf, 0.01, allow_holes=FALSE)
+  # ConcaveHull - params = 0.01 - Best 177 seconds
+  concaveHullSfWithHoles_0_01 <- sf::st_concave_hull(baseRastPolySf, ratio=0.01, allow_holes=FALSE)
 })
+st_write(concaveHullSfWithHoles_0_01, file.path(basePath, "concaveHullSfWithHoles_0_01.shp"), delete_layer=TRUE)
+}
 
 system.time({
-# ConcaveHull - params = 0.01 - Best
-concaveHullSf_0_01 <- sf::st_concave_hull(baseRastPolyNoHolesSf, 0.01, allow_holes=FALSE)
+  # ConcaveHull - params = 0.01 - Best - 53 seconds
+  concaveHullSfWithoutHoles_0_01 <- sf::st_concave_hull(baseRastPolyNoHolesSf, ratio=0.01, allow_holes=FALSE)
 })
+st_write(concaveHullSfWithoutHoles_0_01, file.path(basePath, "concaveHullSfWithoutHoles_0_01.shp"), delete_layer=TRUE)
 
 
 # plot(concaveHullSf_0_01)
 st_write(concaveHullSf_0_01, file.path(basePath, "concaveHullSf_0_01.shp"), delete_layer=TRUE)
 
 ################################################################################
-
+if (FALSE) {
 addRemoveBuffer <- function(x, width = NULL){
   if (is.null(width)){
     message("width is NULL. Returning x...")
@@ -249,4 +254,4 @@ system.time({
 
 # plot(y30)
 st_write(sf::st_as_sf(y30), file.path(basePath, "y30.shp"), delete_layer=TRUE)
-
+}
