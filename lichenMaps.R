@@ -9,15 +9,28 @@ library(reproducible)
 library(whitebox)
 library(caret)
 
+# Source the utility functions
 source("https://raw.githubusercontent.com/pedrogit/rUtils/refs/heads/main/rutils.R")
 # source(file.path(scriptDir, "../base_withSimInit/modules/rUtils/rutils.R")
 scriptDir <- get_script_dir()
 
+# Source the WB_HartJohnstoneForestClasses functions 
 source("https://raw.githubusercontent.com/pedrogit/WB_HartJohnstoneForestClasses/refs/heads/main/R/WB_HartJohnstoneForestClasses.r")
-# source("https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/R/WB_VegBasedDrainage.r")
-
 # source(file.path(scriptDir, "../base_withSimInit/modules/WB_HartJohnstoneForestClasses/R/WB_HartJohnstoneForestClasses.r"))
-source(file.path(scriptDir, "../base_withSimInit/modules/WB_VegBasedDrainage/R/WB_VegBasedDrainage.r"))
+
+# Source the WB_VegBasedDrainage functions 
+source("https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/R/WB_VegBasedDrainage.r")
+# source(file.path(scriptDir, "../base_withSimInit/modules/WB_VegBasedDrainage/R/WB_VegBasedDrainage.r"))
+
+# Source the WB_NonForestedVegClasses functions 
+source("https://raw.githubusercontent.com/pedrogit/WB_NonForestedVegClasses/refs/heads/main/R/WB_NonForestedVegClasses.r")
+# source(file.path(scriptDir, "../base_withSimInit/modules/WB_NonForestedVegClasses/R/WB_NonForestedVegClasses.r"))
+
+# Source the WB_LichenBiomass functions 
+source("https://raw.githubusercontent.com/pedrogit/WB_LichenBiomass/refs/heads/main/R/WB_LichenBiomass.r")
+# source(file.path(scriptDir, "../base_withSimInit/modules/WB_LichenBiomass/R/WB_LichenBiomass.r"))
+
+################################################################################
 
 # Set the output folder and create it
 outputFolder <- file.path(scriptDir, "output")
