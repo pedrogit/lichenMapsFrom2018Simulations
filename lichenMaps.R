@@ -64,7 +64,7 @@ outputRasterfilePath <- file.path(currentRunFolder, outputRasterFileName)
 writeRaster(pixelGroupMap, outputRasterfilePath, overwrite=TRUE)
 
 # Define this raster as the base raster for the rest of the analysis
-baseRast <- !is.na(pixelGroupMap)
+baseRast <- ifel(is.na(pixelGroupMap), NA, 1)
 baseExtent <- ext(baseRast)
 baseCRS <- crs(baseRast)
 baseExtentPoly <- vect(baseExtent, crs = baseCRS)
@@ -296,7 +296,7 @@ if (currentYear == "2011") {
       )
     )
   }
-  
+
   ##############################################################################
   # Generate the non forested area map
   ##############################################################################
@@ -308,65 +308,53 @@ if (currentYear == "2011") {
   
   message("------------------------------------------------------------------------------")   
   message("Generate the study area and rasterize it...")   
-  message("1 - Vectorizing the base raster (pixelGroupMap)...")   
+  message("1 - Vectorizing the base raster (pixelGroupMap)...")
   baseRastPoly <- Cache(
-    as.polygons,
+    terra::as.polygons,
     x = baseRast,
     userTags = "baseRastPoly",
     cachePath = cacheFolder
   )
   
-browser()
-  message("2 - Convert to sf object...")   
-  baseRastPolySf <- Cache(
-    sf:st_as_sf,
-    x = baseRastPoly, 
-    userTags = "baseRastPolyBSf",
+  message("2 - Removing holes...")
+  # display_ring_and_holes(baseRastPoly, "terra::fillHoles")
+  baseRastPolyWithoutHoles <- Cache(
+    terra::fillHoles,
+    x = baseRastPoly,
+    userTags = "baseRastPolyWithoutHoles",
     cachePath = cacheFolder
   )
-
-  message("3 - Making buffer around each polygon...")   
-  bufSize <- res(baseRast)[1] * 30
-  baseRastPolySfBuf <- Cache(
-    sf:st_buffer,
-    x = baseRastPolySf, 
-    width = bufSize,
-    userTags = "baseRastPolySfBuf",
+  
+  message("3 - Convert to sf object...")
+  # display_ring_and_holes(baseRastPolyWithoutHoles, "sf::st_as_sf")
+  baseRastPolyWithoutHolesSf <- Cache(
+    sf::st_as_sf,
+    x = baseRastPolyWithoutHoles, 
+    userTags = "baseRastPolyWithoutHolesSf",
     cachePath = cacheFolder
   )
-
-  message("4 - Dissolving them all together...")   
-  baseRastPolySfBufDissolved <- Cache(
-    sf:st_union,
-    x = baseRastPolySfBuf,
-    userTags = "baseRastPolySfBufDissolved",
+  
+  message("4 - Generate concave hull...")
+  # display_ring_and_holes(baseRastPolyWithoutHolesSf, "sf::st_concave_hull")
+  concaveHull <- Cache(
+    sf::st_concave_hull,
+    x = baseRastPolyWithoutHolesSf,
+    ratio = 0.01,
+    allow_holes = FALSE,
+    userTags = "concaveHull",
     cachePath = cacheFolder
   )
-
-  message("5 - Removing a 10 pixels wide buffer...")   
-  baseRastPolySfBufDissolvedWithHoles <- Cache(
-    sf:st_buffer,
-    x = baseRastPolySfBufDissolved, 
-    width = -bufSize,
-    userTags = "baseRastPolySfBufDissolvedWithHoles",
-    cachePath = cacheFolder
-  )
-
-  message("6 - Removing the holes...")   
-  baseRastPolySfBufDissolvedWithoutHoles <- Cache(
-    fillHoles,
-    x = baseRastPolySfBufDissolvedWithHoles,
-    userTags = "baseRastPolySfBufDissolvedWithoutHoles",
-    cachePath = cacheFolder
-  )
-
-  message("7 - Rasterizing to an equivalent raster...")   
-  studyAreaRast <- Cache(
+  st_write(concaveHull, file.path(currentRunFolder, "concaveHull.shp"), delete_layer=TRUE)
+  
+  message("5 - Rasterizing to an equivalent raster...")
+  # display_ring_and_holes(concaveHull, "terra::rasterize")
+  rasterToMatch <- Cache(
     terra::rasterize,
-    x = baseRastPolySfBufDissolvedWithoutHoles,
+    x = concaveHull,
     y = baseRast,
-    userTags = "studyAreaRast",
+    userTags = "rasterToMatch",
     cachePath = cacheFolder
   )
+  writeRaster(rasterToMatch, file.path(currentRunFolder, "rasterToMatch.tif"), overwrite=TRUE)
 }
 
