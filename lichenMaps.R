@@ -4,6 +4,7 @@
 ################################################################################
 library(data.table)
 library(terra)
+library(sf)
 library(reproducible)
 library(whitebox)
 library(caret)
@@ -63,13 +64,13 @@ outputRasterfilePath <- file.path(currentRunFolder, outputRasterFileName)
 writeRaster(pixelGroupMap, outputRasterfilePath, overwrite=TRUE)
 
 # Define this raster as the base raster for the rest of the analysis
-baseRast <- rast(pixelGroupMap)
+baseRast <- !is.na(pixelGroupMap)
 baseExtent <- ext(baseRast)
 baseCRS <- crs(baseRast)
 baseExtentPoly <- vect(baseExtent, crs = baseCRS)
 
 ################################################################################
-# Generate initial and static data 
+# Generate initial and static data that do not change over the years
 ################################################################################
 if (currentYear == "2011") {
   ##############################################################################
@@ -299,60 +300,70 @@ if (currentYear == "2011") {
   ##############################################################################
   # Generate the non forested area map
   ##############################################################################
+  message("##############################################################################")   
+  message("Generate the non forested area map...")   
   # We do not have the equivalent of rasterToMatch which is a raster
   # representation of the study area without NA holes. We therefore have to 
   # produce it from pixelGroupMap.
   
-  message("##############################################################################")   
-  message("Generate the non forested area map...")   
-  message("1 - Vectorize pixelGroupMap...")   
+  message("------------------------------------------------------------------------------")   
+  message("Generate the study area and rasterize it...")   
+  message("1 - Vectorizing the base raster (pixelGroupMap)...")   
   baseRastPoly <- Cache(
     as.polygons,
     x = baseRast,
     userTags = "baseRastPoly",
     cachePath = cacheFolder
   )
-
-  message("2 - Make buffer around each polygon...")   
-  bufSize <- res(baseRast)[1] * 30
-  baseRastPolyBuf <- Cache(
-    buffer,
+  
+browser()
+  message("2 - Convert to sf object...")   
+  baseRastPolySf <- Cache(
+    sf:st_as_sf,
     x = baseRastPoly, 
+    userTags = "baseRastPolyBSf",
+    cachePath = cacheFolder
+  )
+
+  message("3 - Making buffer around each polygon...")   
+  bufSize <- res(baseRast)[1] * 30
+  baseRastPolySfBuf <- Cache(
+    sf:st_buffer,
+    x = baseRastPolySf, 
     width = bufSize,
-    userTags = "baseRastPolyBuf",
+    userTags = "baseRastPolySfBuf",
     cachePath = cacheFolder
   )
 
-  message("3 - Dissolve them all together...")   
-  baseRastPolyBufDissolved <- Cache(
-    aggregate,
-    x = baseRastPolyBuf,
-    fun = "first",
-    userTags = "baseRastPolyBufDissolved",
+  message("4 - Dissolving them all together...")   
+  baseRastPolySfBufDissolved <- Cache(
+    sf:st_union,
+    x = baseRastPolySfBuf,
+    userTags = "baseRastPolySfBufDissolved",
     cachePath = cacheFolder
   )
 
-  message("4 - Remove a 10 pixels wide buffer...")   
-  baseRastPolyBufDissolvedWithHoles <- Cache(
-    buffer,
-    baseRastPolyBufDissolvedWithHoles, 
+  message("5 - Removing a 10 pixels wide buffer...")   
+  baseRastPolySfBufDissolvedWithHoles <- Cache(
+    sf:st_buffer,
+    x = baseRastPolySfBufDissolved, 
     width = -bufSize,
-    userTags = "baseRastPolyBufDissolvedWithHoles",
+    userTags = "baseRastPolySfBufDissolvedWithHoles",
     cachePath = cacheFolder
   )
 
-  message("5 - Remove the holes...")   
-  baseRastPolyBufDissolvedWithoutHoles <- Cache(
+  message("6 - Removing the holes...")   
+  baseRastPolySfBufDissolvedWithoutHoles <- Cache(
     fillHoles,
-    x = baseRastPolyBufDissolvedWithHoles,
-    userTags = "baseRastPolyBufDissolvedWithoutHoles",
+    x = baseRastPolySfBufDissolvedWithHoles,
+    userTags = "baseRastPolySfBufDissolvedWithoutHoles",
     cachePath = cacheFolder
   )
 
-  message("6 - Rasterize to an equivalent raster...")   
+  message("7 - Rasterizing to an equivalent raster...")   
   studyAreaRast <- Cache(
     terra::rasterize,
-    x = baseRastPolyBufDissolvedWithoutHoles,
+    x = baseRastPolySfBufDissolvedWithoutHoles,
     y = baseRast,
     userTags = "studyAreaRast",
     cachePath = cacheFolder
