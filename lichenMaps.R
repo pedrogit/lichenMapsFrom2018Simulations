@@ -40,7 +40,7 @@ dir.create(outputFolder, recursive = TRUE)
 cacheFolder <- file.path(scriptDir, "cache")
 dir.create(cacheFolder, recursive = TRUE)
 
-# Set the source data folder
+# Set the source data folder. This is a copy of https://drive.google.com/drive/folders/1dDYHZTT9Q5lpSfGZUW3cNXhR3TjjbctR
 sourceDataFolder <- "G:/Home/documents/FromMaria"
   
 # Set the data processing folder
@@ -91,8 +91,11 @@ for (currentRun in runs){
     }
     
     # Define a file copying function
-    copySourceRDSDataFile <- function(filename){
-      filename <- paste0(filename, "_year", currentYear, ".rds")
+    copySourceRDSDataFile <- function(filename, extension = ".rds", addyear = TRUE){
+      if (addyear) {
+        filename <- paste0(filename, "_year", currentYear)
+      }
+      filename <- paste0(filename, extension)
       if (!file.exists(file.path(currentRunDataFolder, filename))) {
         file.copy(
           file.path(currentRunSourceDataFolder, filename), 
@@ -110,6 +113,14 @@ for (currentRun in runs){
     ################################################################################
     copySourceRDSDataFile("cohortData")
     copySourceRDSDataFile("pixelGroupMap")
+    copySourceRDSDataFile("RSFshp", ".shp", FALSE)
+    copySourceRDSDataFile("RSFshp", ".dbf", FALSE)
+    copySourceRDSDataFile("RSFshp", ".prj", FALSE)
+    copySourceRDSDataFile("RSFshp", ".shx", FALSE)
+    copySourceRDSDataFile("bcr6", ".shp", FALSE)
+    copySourceRDSDataFile("bcr6", ".dbf", FALSE)
+    copySourceRDSDataFile("bcr6", ".prj", FALSE)
+    copySourceRDSDataFile("bcr6", ".shx", FALSE)
     
     ################################################################################
     # 2 - Read pixelGroupMap from the data folder and set it as the base raster
@@ -365,69 +376,119 @@ for (currentRun in runs){
       # 4.9 - Generate the non forested area map
       ##############################################################################
       message("##############################################################################")   
-      message("Generate the non forested area map...")   
-      # We do not have the equivalent of rasterToMatch which is a raster
+      message("Generate the non forested area map...")
+      # The non-forested area is the study area minus the area covered by the 
+      # biomass_core forested pixels.
+      # So first we need the study area which is composed of "the union between 
+      # NT1 caribou range and Bird Conservation Region 6 (Bird Studies Canada 
+      # and NABCI, 2014) within the Northwest Territories, Canada (Micheletti, 
+      # et al. (2023) Will this umbrella leak - A caribou umbrella index for 
+      # boreal landbird).
+
+      message("------------------------------------------------------------------------------")
+      message("1 - Read the NT1 caribou range file from the source data folder...")
+      nt1Shape <- sf::st_read(file.path(currentRunDataFolder, "RSFshp.shp"))
+      nt1Shape <- sf::st_transform(nt1Shape, baseCRS)
+      nt1Shape <- nt1Shape[, "geometry"] # keep only the geometry column
+      
+      # message("------------------------------------------------------------------------------")   
+      # message("Download the  file Bird Conservation Region file...")
+      # bcrzip <- "https://www.birdscanada.org/download/gislab/bcr_terrestrial_shape.zip" # does not work anymore
+      # bcrzip <- "https://services1.arcgis.com/d5M16PKlQTMEVyua/arcgis/rest/services/BCR_terrestrial_political_divisions/FeatureServer/replicafilescache/BCR_terrestrial_political_divisions_-3846708849115759799.zip" # too complicated
+      # bcrShape <- Cache(prepInputs,
+      #   url = bcrzip,
+      #   destinationPath = cacheFolder,
+      #   targetCRS = baseCRS,
+      #   fun = "sf::st_read"
+      # )
+
+      message("------------------------------------------------------------------------------")
+      message("2 - Load the  file Bird Conservation Region 6 file...")
+      # It can also be found here: https://nabci-us.org/resources/bird-conservation-regions-map/
+      bcr6Shape <- sf::st_read(file.path(currentRunDataFolder, "bcr6.shp"))
+      bcr6Shape <- bcr6Shape[bcr6Shape$PROVINCE_S == "NORTHWEST TERRITORIES", "geometry"]
+      bcr6Shape <- sf::st_transform(bcr6Shape, baseCRS)
+
+      message("------------------------------------------------------------------------------")
+      message("3 - Union Bird Conservation Region 6 with NT1...")
+      studyArea <- sf::st_union(bcr6Shape, nt1Shape)
+      # plot(studyArea)
+      sf::st_write(studyArea, file.path(currentRunOutputFolder, "studyArea.shp"), delete_layer=TRUE)
+      
+      message("4 - Rasterize to an equivalent raster...")
+      # display_ring_and_holes(concaveHull, "terra::rasterize")
+      studyAreaRast <- Cache(
+        terra::rasterize,
+        x = studyArea,
+        y = baseRast,
+        userTags = "studyAreaRast",
+        cachePath = cacheFolder
+      )
+      writeRasterForCurrentRun(studyAreaRast, "studyAreaRast")
+      
+      # Old code trying to recreate the study area from the cancave hull of pixelGroupMap.
+      # We do not have the equivalent of studyAreaRast which is a raster
       # representation of the study area without NA holes. We therefore have to 
       # produce it from pixelGroupMap.
-# browser()
+
+      # message("------------------------------------------------------------------------------")   
+      # message("Generate the study area and rasterize it...")   
+      # message("1 - Vectorizing the base raster (pixelGroupMap)...")
+      # baseRastPoly <- Cache(
+      #   terra::as.polygons,
+      #   x = baseRast,
+      #   userTags = "baseRastPoly",
+      #   cachePath = cacheFolder
+      # )
+      # 
+      # message("2 - Removing holes...")
+      # # display_ring_and_holes(baseRastPoly, "terra::fillHoles")
+      # baseRastPolyWithoutHoles <- Cache(
+      #   terra::fillHoles,
+      #   x = baseRastPoly,
+      #   userTags = "baseRastPolyWithoutHoles",
+      #   cachePath = cacheFolder
+      # )
+      # 
+      # message("3 - Convert to sf object...")
+      # # display_ring_and_holes(baseRastPolyWithoutHoles, "sf::st_as_sf")
+      # baseRastPolyWithoutHolesSf <- Cache(
+      #   sf::st_as_sf,
+      #   x = baseRastPolyWithoutHoles, 
+      #   userTags = "baseRastPolyWithoutHolesSf",
+      #   cachePath = cacheFolder
+      # )
+      # 
+      # message("4 - Generate concave hull...")
+      # # display_ring_and_holes(baseRastPolyWithoutHolesSf, "sf::st_concave_hull")
+      # concaveHull <- Cache(
+      #   sf::st_concave_hull,
+      #   x = baseRastPolyWithoutHolesSf,
+      #   ratio = 0.01,
+      #   allow_holes = FALSE,
+      #   userTags = "concaveHull",
+      #   cachePath = cacheFolder
+      # )
+      # # sf::st_write(concaveHull, file.path(currentYearOutputFolder, "concaveHull.shp"), delete_layer=TRUE)
+      # 
+      # message("5 - Rasterizing to an equivalent raster...")
+      # # display_ring_and_holes(concaveHull, "terra::rasterize")
+      # studyAreaRast <- Cache(
+      #   terra::rasterize,
+      #   x = concaveHull,
+      #   y = baseRast,
+      #   userTags = "studyAreaRast",
+      #   cachePath = cacheFolder
+      # )
+      # writeRasterForCurrentRun(studyAreaRast, "studyAreaRast")
+      
       message("------------------------------------------------------------------------------")   
-      message("Generate the study area and rasterize it...")   
-      message("1 - Vectorizing the base raster (pixelGroupMap)...")
-      baseRastPoly <- Cache(
-        terra::as.polygons,
-        x = baseRast,
-        userTags = "baseRastPoly",
-        cachePath = cacheFolder
-      )
-      
-      message("2 - Removing holes...")
-      # display_ring_and_holes(baseRastPoly, "terra::fillHoles")
-      baseRastPolyWithoutHoles <- Cache(
-        terra::fillHoles,
-        x = baseRastPoly,
-        userTags = "baseRastPolyWithoutHoles",
-        cachePath = cacheFolder
-      )
-      
-      message("3 - Convert to sf object...")
-      # display_ring_and_holes(baseRastPolyWithoutHoles, "sf::st_as_sf")
-      baseRastPolyWithoutHolesSf <- Cache(
-        sf::st_as_sf,
-        x = baseRastPolyWithoutHoles, 
-        userTags = "baseRastPolyWithoutHolesSf",
-        cachePath = cacheFolder
-      )
-      
-      message("4 - Generate concave hull...")
-      # display_ring_and_holes(baseRastPolyWithoutHolesSf, "sf::st_concave_hull")
-      concaveHull <- Cache(
-        sf::st_concave_hull,
-        x = baseRastPolyWithoutHolesSf,
-        ratio = 0.01,
-        allow_holes = FALSE,
-        userTags = "concaveHull",
-        cachePath = cacheFolder
-      )
-      # st_write(concaveHull, file.path(currentYearOutputFolder, "concaveHull.shp"), delete_layer=TRUE)
-      
-      message("5 - Rasterizing to an equivalent raster...")
-      # display_ring_and_holes(concaveHull, "terra::rasterize")
-      rasterToMatch <- Cache(
-        terra::rasterize,
-        x = concaveHull,
-        y = baseRast,
-        userTags = "rasterToMatch",
-        cachePath = cacheFolder
-      )
-      writeRasterForCurrentRun(rasterToMatch, "rasterToMatch")
-      
-      message("------------------------------------------------------------------------------")   
-      message("Open, crop and project the base LCC map to rasterToMatch (forested areas will be removed later)...")
+      message("Open, crop and project the base LCC map to studyAreaRast (forested areas will be removed later)...")
       WB_NonForestedVegClassesBaseLCCMap <- Cache(
         postProcess(
           terra::rast(file.path(dataFolder, "NWT_MVI", "EOSD_NWT.tif")),
-          projectTo = rasterToMatch,
-          cropTo = rasterToMatch
+          projectTo = studyAreaRast,
+          cropTo = studyAreaRast
         ),
         userTags = "baseLCC",
         cachePath = cacheFolder
