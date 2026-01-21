@@ -47,12 +47,13 @@ sourceDataFolder <- "G:/Home/documents/FromMaria"
 dataFolder <- file.path(scriptDir, "data")
 
 # Define the set of runs to process
-# runs <- c("CanESM2_run1", "CanESM2_run2", "CanESM2_run3", "CanESM2_run4", "CanESM2_run5", "CCSM4_run1", "CCSM4_run2", "CCSM4_run3", "CCSM4_run4", "CCSM4_run5", "INM-CM4_run1", "INM-CM4_run2", "INM-CM4_run3", "INM-CM4_run4", "INM-CM4_run5")
-runs <- c("CanESM2_run1")
+runs <- c("CanESM2_run1", "CanESM2_run2", "CanESM2_run3", "CanESM2_run4", "CanESM2_run5", "CCSM4_run1", "CCSM4_run2", "CCSM4_run3", "CCSM4_run4", "CCSM4_run5", "INM-CM4_run1", "INM-CM4_run2", "INM-CM4_run3", "INM-CM4_run4", "INM-CM4_run5")
+# runs <- c("CCSM4_run3", "CCSM4_run4", "CCSM4_run5", "INM-CM4_run1", "INM-CM4_run2", "INM-CM4_run3", "INM-CM4_run4", "INM-CM4_run5")
+# runs <- c("CanESM2_run1")
 
 # Define the years to process
 years <- c("2011", "2017", "2021", "2031", "2041", "2051", "2061", "2071", "2081", "2091", "2100")
-# years <- c("2011", "2017")
+# years <- c("2011")
 
 # browser()
 ################################################################################
