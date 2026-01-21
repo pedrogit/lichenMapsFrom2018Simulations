@@ -11,7 +11,7 @@ library(caret)
 
 # Source the utility functions
 source("https://raw.githubusercontent.com/pedrogit/rUtils/refs/heads/main/rutils.R")
-# source(file.path(scriptDir, "../base_withSimInit/modules/rUtils/rutils.R")
+# source(file.path(scriptDir, "../base_withSimInit/modules/rUtils/rutils.R"))
 scriptDir <- get_script_dir()
 
 # Source the WB_HartJohnstoneForestClasses functions 
@@ -19,15 +19,15 @@ source("https://raw.githubusercontent.com/pedrogit/WB_HartJohnstoneForestClasses
 # source(file.path(scriptDir, "../base_withSimInit/modules/WB_HartJohnstoneForestClasses/R/WB_HartJohnstoneForestClasses.r"))
 
 # Source the WB_VegBasedDrainage functions 
-source("https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/R/WB_VegBasedDrainage.r")
+source("https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/R/WB_VegBasedDrainage.R")
 # source(file.path(scriptDir, "../base_withSimInit/modules/WB_VegBasedDrainage/R/WB_VegBasedDrainage.r"))
 
 # Source the WB_NonForestedVegClasses functions 
-source("https://raw.githubusercontent.com/pedrogit/WB_NonForestedVegClasses/refs/heads/main/R/WB_NonForestedVegClasses.r")
+source("https://raw.githubusercontent.com/pedrogit/WB_NonForestedVegClasses/refs/heads/main/R/WB_NonForestedVegClasses.R")
 # source(file.path(scriptDir, "../base_withSimInit/modules/WB_NonForestedVegClasses/R/WB_NonForestedVegClasses.r"))
 
 # Source the WB_LichenBiomass functions 
-source("https://raw.githubusercontent.com/pedrogit/WB_LichenBiomass/refs/heads/main/R/WB_LichenBiomass.r")
+source("https://raw.githubusercontent.com/pedrogit/WB_LichenBiomass/refs/heads/main/R/WB_LichenBiomass.R")
 # source(file.path(scriptDir, "../base_withSimInit/modules/WB_LichenBiomass/R/WB_LichenBiomass.r"))
 
 ################################################################################
@@ -422,8 +422,7 @@ for (currentRun in runs){
       writeRasterForCurrentRun(rasterToMatch, "rasterToMatch")
       
       message("------------------------------------------------------------------------------")   
-      message("Open, crop and project the base LCC map to rasterToMatch...")
-      message("  Forested areas will be removed later)...")
+      message("Open, crop and project the base LCC map to rasterToMatch (forested areas will be removed later)...")
       WB_NonForestedVegClassesBaseLCCMap <- Cache(
         postProcess(
           terra::rast(file.path(dataFolder, "NWT_MVI", "EOSD_NWT.tif")),
