@@ -498,6 +498,12 @@ for (currentRun in runs){
       message("------------------------------------------------------------------------------")   
       message("Read the meanBiomassPerMVILCC table...")
       WB_MeanBiomassPerVegClasses <- fread(file.path(dataFolder, "meanBiomassPerMVILCC.csv"))
+
+      specialPixelCountDT <- data.table(
+        year = integer(),
+        disturbed_cnt = numeric(),
+        lcc_only_forest_cnt = numeric()
+      )
     }
 
 # browser()  
@@ -556,8 +562,36 @@ for (currentRun in runs){
     )
     writeRasterForCurrentYear(WB_LichenBiomassMap, "lichenBiomass")
     # plot(WB_LichenBiomassMap)
+
+    message("################################################################################")   
+    message("9 - Output map of pixelGroupMap disturbed pixels for ", currentRun, "(", currentYear, ")...")
+    disturbedMap <- pixelGroupMap
+    disturbedMap[disturbedMap != 0] <- NA
+    distCnt <- terra::global(!is.na(disturbedMap), "sum", na.rm = TRUE)
+    if (distCnt[[1]] != 0){
+      writeRasterForCurrentYear(disturbedMap, "disturbed")
+    }
+    
+    message("################################################################################")   
+    message("10 - Output map of MVI forested area outside pixelGroupMap forested pixels for ", currentRun, "(", currentYear, ")...")
+    llcForestedOnlyMap <- WB_NonForestedVegClassesMap
+    llcForestedOnlyMap[!(llcForestedOnlyMap %in% c(211, 212, 213, 221, 222, 223, 231, 232, 233))] <- NA
+    lccForestCnt <- terra::global(!is.na(disturbedMap), "sum", na.rm = TRUE)
+    if (lccForestCnt[[1]] != 0){
+      writeRasterForCurrentYear(llcForestedOnlyMap, "llcForestedOnly")
+    }
+    
+    message("################################################################################")   
+    message("11 - (Re)Save the special pixel count table for ", currentRun, "(", currentYear, ")...")
+    #  Add a row to the special pixel table
+    specialPixelCountDT <- rbind(
+      specialPixelCountDT, 
+      data.table(
+        year = currentYear, 
+        disturbed_cnt = distCnt[[1]], 
+        lcc_only_forest_cnt = lccForestCnt[[1]]
+      )
+    )
+    fwrite(specialPixelCountDT, file.path(currentRunOutputFolder, "specialPixelCnt.csv"))
   }
 }
-  
-
-
