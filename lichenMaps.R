@@ -422,7 +422,7 @@ for (currentRun in runs){
       studyArea <- sf::st_union(sf::st_union(bcr6Shape, nt1Shape))
       # plot(studyArea)
       sf::st_write(studyArea, file.path(currentRunOutputFolder, "studyArea.shp"), delete_layer=TRUE)
-      
+      studyArea <- terra::vect(studyArea)
 
       message("------------------------------------------------------------------------------")
       message("4.9.4 - Rasterize to an equivalent raster for ", currentRun, "...")
