@@ -324,7 +324,7 @@ for (currentRun in runs){
       ecoProvVect <- ecoProvVect[, c("NA_L3NAME")]
       ecoProvVect$NA_L3NAME <- as.factor(ecoProvVect$NA_L3NAME)
       names(ecoProvVect)[names(ecoProvVect) == "NA_L3NAME"] <- "ecoprov"
-      ecoprov <- rasterize(ecoProvVect, plotAndPixelGroupAreaRast, field = "ecoprov")
+      ecoprov <- terra::rasterize(ecoProvVect, plotAndPixelGroupAreaRast, field = "ecoprov")
       
       ##############################################################################
       # 4.8 - Fit a drainage model
