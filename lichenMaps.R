@@ -489,6 +489,7 @@ for (currentRun in runs){
         postProcess(
           terra::rast(file.path(dataFolder, "NWT_MVI", "EOSD_NWT.tif")),
           projectTo = studyAreaRast,
+          method = "mode",
           cropTo = studyAreaRast
         ),
         userTags = "baseLCC",
