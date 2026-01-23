@@ -207,8 +207,8 @@ for (currentRun in runs){
       plotAndPixelGroupAreaDemPath <- file.path(cacheFolder, "plotAndPixelGroupAreaDem.tif")
       MRDEMMap <- Cache(
         prepInputs,
-        url = "https://canelevation-dem.s3.ca-central-1.amazonaws.com/mrdem-30/mrdem-30-dtm.tif",
-        targetFile = "mrdem-30-dtm.tif",
+        url = "https://canelevation-dem.s3.ca-central-1.amazonaws.com/mrdem-30/mrdem-30-dtm.vrt",
+        targetFile = "mrdem-30-dtm.vrt",
         destinationPath = cacheFolder,
         fun = terra::rast,
         cropTo = plotAndPixelGroupArea,
