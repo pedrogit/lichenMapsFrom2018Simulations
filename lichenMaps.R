@@ -112,6 +112,8 @@ for (currentRun in runs){
     ################################################################################
     # 1 - Copy the necessary files
     ################################################################################
+    message("################################################################################")   
+    message("1 - Copy the necessary files for ", currentRun, "(", currentYear, ")...")
     copySourceRDSDataFile("cohortData")
     copySourceRDSDataFile("pixelGroupMap")
     copySourceRDSDataFile("RSFshp", ".shp", FALSE)
@@ -126,6 +128,8 @@ for (currentRun in runs){
     ################################################################################
     # 2 - Read pixelGroupMap from the data folder and set it as the base raster
     ################################################################################
+    message("################################################################################")   
+    message("2 - Read pixelGroupMap from the data folder and set it as the base raster for ", currentRun, "(", currentYear, ")...")
     pixelGroupMapFile <- paste0("pixelGroupMap_year", currentYear, ".rds")
     pixelGroupMapfilePath <- file.path(currentRunDataFolder, pixelGroupMapFile)
     if (!file.exists(pixelGroupMapfilePath)){
@@ -175,6 +179,8 @@ for (currentRun in runs){
       ################################################################################
       # 4.1 - Fit the WB_Drainage model and generate a drainage map.
       ################################################################################
+      message("##############################################################################")   
+      message("4.1 - Fit the WB_Drainage model and generate a drainage map for ", currentRun, "...")
       
       # Read and clean plot data from the module repository
       plotdataFilePath <- "https://raw.githubusercontent.com/pedrogit/WB_VegBasedDrainage/refs/heads/main/data/plotData.csv"
@@ -201,9 +207,9 @@ for (currentRun in runs){
       # 4.2 - Download and postProcess the Medium Resolution Digital Elevation Model (MRDEM)
       ################################################################################
       message("##############################################################################")   
-      message("Downloading/cropping/reprojecting/resampling/masking medium resolution ")
-      message("MRDEM dem (80GB) to union of studyarea and a 100km buffer around buffered plot points...")
-      
+      message("4.2 - Downloading/cropping/reprojecting/resampling/masking medium resolution")
+      message("MRDEM dem (80GB) to union of studyarea and a 100km buffer around buffered plot")
+      message("points for ", currentRun, "...")
       plotAndPixelGroupAreaDemPath <- file.path(cacheFolder, "plotAndPixelGroupAreaDem.tif")
       MRDEMMap <- Cache(
         prepInputs,
@@ -225,7 +231,7 @@ for (currentRun in runs){
       # 4.3 - Generate the TWI map
       ################################################################################
       message("##############################################################################")   
-      message("Generating twi from MRDEMMap...")   
+      message("4.3 - Generating twi from MRDEMMap for ", currentRun, "...")
       twi <- Cache(
         generateTWIMap(
           dem = MRDEMMap,
@@ -244,7 +250,7 @@ for (currentRun in runs){
       # 4.4 - Generate the Downslope Distance map
       ################################################################################
       message("##############################################################################")   
-      message("Generating downslope_dist from MRDEMMap...")   
+      message("4.4 - Generating downslope_dist from MRDEMMap for ", currentRun, "...")
       downslope_dist <- Cache(
         generateDownslopeDistMap(
           dem = MRDEMMap,
@@ -263,7 +269,7 @@ for (currentRun in runs){
       # 4.5 - Generate an aspect map from the MRDEM if it is not supplied
       ##############################################################################
       message("##############################################################################")   
-      message("Generating aspect from MRDEMMap...")
+      message("4.5 - Generating aspect from MRDEMMap for ", currentRun, "...")
       aspectPath <- file.path(cacheFolder, "plotAndPixelGroupAreaDem_aspect.tif")
       aspect <- Cache(
         cacheableWhiteboxFct,
@@ -280,13 +286,13 @@ for (currentRun in runs){
       # 4.6 - Download and patch CANSIS soil maps with SoilGrids data
       ##############################################################################
       message("##############################################################################")   
-      message("Download and patch CANSIS soil maps with SoilGrids data...")
+      message("4.6 - Download and patch CANSIS soil maps with SoilGrids data for ", currentRun, "...")
       CANSISMapToProcess <- c("Clay", "Sand", "Silt", "BD") # BD is bulk_density
       equivSoilGridsMaps <- c("clay", "sand", "silt", "bdod") # bdod is bulk_density
     
       for (mapName in CANSISMapToProcess) {
         message("------------------------------------------------------------------------------")
-        message("Processing ", mapName, "...")
+        message("4.6.", match(mapName, CANSISMapToProcess), " - Processing ", mapName, "...")
         assign(tolower(mapName), Cache(
           getAndPatchCANSISSoilMap(
             mapName = mapName,
@@ -307,7 +313,7 @@ for (currentRun in runs){
       # 4.7 - Download the EcoProvince map
       ##############################################################################
       message("##############################################################################")   
-      message("Download the EcoProvince map...")
+      message("4.7 - Download the EcoProvince map for ", currentRun, "...")
       ecoProvVect <- Cache(
         prepInputs,
         url ="https://dmap-prod-oms-edc.s3.us-east-1.amazonaws.com/ORD/Ecoregions/cec_na/NA_CEC_Eco_Level3.zip",
@@ -330,6 +336,7 @@ for (currentRun in runs){
       # 4.8 - Fit a drainage model
       ##############################################################################
       message("##############################################################################")   
+      message("4.8.1 - Fit a drainage model for ", currentRun, "...")
       # List the covariates from which to extract values
       # element's names are the names of the column to create in the plotPoints dataframe (e.g clay)
       # element values are maps to extract values from (e.g. twi)
@@ -356,8 +363,8 @@ for (currentRun in runs){
       # From now on, the module will, at each iteration step, use the model to predict 
       # drainage from the list of covariate maps.
       message("------------------------------------------------------------------------------")
-      message("Now that the model is fitted using maps covering the plot data, we can crop")
-      message("the covariates back to the study area (baseRast)...")
+      message("4.8.2 - Now that the model is fitted using maps covering the plot data,")
+      message("we can crop the covariates back to the study area (baseRast)...")
       for (mapName in names(covariateMapList)) {
         message("Cropping ", mapName, " back to study area...")   
         assign(
@@ -377,7 +384,7 @@ for (currentRun in runs){
       # 4.9 - Generate the non forested area map
       ##############################################################################
       message("##############################################################################")   
-      message("Generate the non forested area map...")
+      message("4.9 - Generate the non forested area map for ", currentRun, "...")
       # The non-forested area is the study area minus the area covered by the 
       # biomass_core forested pixels.
       # So first we need the study area which is composed of "the union between 
@@ -387,13 +394,13 @@ for (currentRun in runs){
       # boreal landbird).
 
       message("------------------------------------------------------------------------------")
-      message("1 - Read the NT1 caribou range file from the source data folder...")
+      message("4.9.1 - Read the NT1 caribou range file from the source data folder for ", currentRun, "...")
       nt1Shape <- sf::st_read(file.path(currentRunDataFolder, "RSFshp.shp"))
       nt1Shape <- sf::st_transform(nt1Shape, baseCRS)
       nt1Shape <- nt1Shape[, "geometry"] # keep only the geometry column
       
       # message("------------------------------------------------------------------------------")   
-      # message("Download the  file Bird Conservation Region file...")
+      # message("Download the Bird Conservation Region file...")
       # bcrzip <- "https://www.birdscanada.org/download/gislab/bcr_terrestrial_shape.zip" # does not work anymore
       # bcrzip <- "https://services1.arcgis.com/d5M16PKlQTMEVyua/arcgis/rest/services/BCR_terrestrial_political_divisions/FeatureServer/replicafilescache/BCR_terrestrial_political_divisions_-3846708849115759799.zip" # too complicated
       # bcrShape <- Cache(prepInputs,
@@ -404,19 +411,21 @@ for (currentRun in runs){
       # )
 
       message("------------------------------------------------------------------------------")
-      message("2 - Load the  file Bird Conservation Region 6 file...")
+      message("4.9.2 - Load the  file Bird Conservation Region 6 file for ", currentRun, "...")
       # It can also be found here: https://nabci-us.org/resources/bird-conservation-regions-map/
       bcr6Shape <- sf::st_read(file.path(currentRunDataFolder, "bcr6.shp"))
       bcr6Shape <- bcr6Shape[bcr6Shape$PROVINCE_S == "NORTHWEST TERRITORIES", "geometry"]
       bcr6Shape <- sf::st_transform(bcr6Shape, baseCRS)
 
       message("------------------------------------------------------------------------------")
-      message("3 - Union Bird Conservation Region 6 with NT1...")
-      studyArea <- sf::st_union(bcr6Shape, nt1Shape)
+      message("4.9.3 - Union Bird Conservation Region 6 with NT1 and dissolve everything together for ", currentRun, "...")
+      studyArea <- sf::st_union(sf::st_union(bcr6Shape, nt1Shape))
       # plot(studyArea)
       sf::st_write(studyArea, file.path(currentRunOutputFolder, "studyArea.shp"), delete_layer=TRUE)
       
-      message("4 - Rasterize to an equivalent raster...")
+
+      message("------------------------------------------------------------------------------")
+      message("4.9.4 - Rasterize to an equivalent raster for ", currentRun, "...")
       # display_ring_and_holes(concaveHull, "terra::rasterize")
       studyAreaRast <- Cache(
         terra::rasterize,
@@ -484,7 +493,8 @@ for (currentRun in runs){
       # writeRasterForCurrentRun(studyAreaRast, "studyAreaRast")
       
       message("------------------------------------------------------------------------------")   
-      message("Open, crop and project the base LCC map to studyAreaRast (forested areas will be removed later)...")
+      message("4.9.5 - Open, crop and project the base LCC map to studyAreaRast (forested ")
+      message("areas will be removed later) for ", currentRun, "...")
       WB_NonForestedVegClassesBaseLCCMap <- Cache(
         postProcess(
           terra::rast(file.path(dataFolder, "NWT_MVI", "EOSD_NWT.tif")),
@@ -497,7 +507,7 @@ for (currentRun in runs){
       )
       
       message("------------------------------------------------------------------------------")   
-      message("Read the meanBiomassPerMVILCC table...")
+      message("4.9.6 - Read the meanBiomassPerMVILCC table for ", currentRun, "...")
       WB_MeanBiomassPerVegClasses <- fread(file.path(dataFolder, "meanBiomassPerMVILCC.csv"))
 
       specialPixelCountDT <- data.table(
@@ -512,7 +522,7 @@ for (currentRun in runs){
     # Generate dynamic data that do change over years
     ################################################################################
     message("################################################################################")   
-    message("5 - Generate the drainage map for ", currentYear, "...")
+    message("5 - Generate the drainage map  for ", currentRun, "(", currentYear, ")...")
     WB_VegBasedDrainageMap <- computeDrainageMap(
       WB_VegBasedDrainageModel = drainageModel,
       HJForestClassesMap = WB_HJForestClassesMap,
